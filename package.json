@@ -10,8 +10,7 @@
     "dev": "nodemon app.js",
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "ng build",
-    "postinstall": "ng build --prod",
+    "postinstall": "ng build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Diego Dos Santos",
