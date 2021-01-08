@@ -13,4 +13,4 @@ const loadDataRoute = require('./routes/loadData');
 app.use('/calculate', calculateRoute);
 app.use('/load', loadDataRoute)
 
-app.listen(8080, () => console.log('Server up!'));
+app.listen(process.env.PORT || 8080, () => console.log('Server up!'));
