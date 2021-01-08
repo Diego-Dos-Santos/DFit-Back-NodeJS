@@ -1,87 +1,79 @@
-const router = require('express').Router();
-const clients = require('../data/clients');
+const router = require("express").Router();
+const clients = require("../data/clients");
 
 let listTrainerAndClient = []; // LISTA FINAL
 let valueTrainer = undefined; // ENTRENADOR CON MAYOR VALOR
 let valueClient = undefined; // CLIENTE CON MAYOR VALOR
 
+// 2 - Creamos dos funciones haciendo el map en los entrenadores y los clientes
 
-function mapTrainer(trainers){
-   //TRAINER
-   trainers.map( trainer => {
-    if(valueTrainer == undefined){
+function mapTrainer(trainers) {
+  //TRAINER
+  trainers.map((trainer) => {
+    if (valueTrainer == undefined) {
       valueTrainer = trainer;
-
-    }else{
-      if(valueTrainer.rep < trainer.rep){
+    } else {
+      if (valueTrainer.rep < trainer.rep) { // Se queda el entrenador con mayor valoración
         valueTrainer = trainer;
       }
     }
-
   });
 }
 
-function mapClient(client){
-   //CLIENT
-  for(user in client){
-    if(valueClient == undefined){
-      valueClient = [user,client[user]]; // RECOJO EL VALOR DEL NOMBRE DE CADA CLIENTE Y LA VALORACIÓN QUE PIDE EN UN ARRAY - CONVERTIMOS EN UN ARRAY 
-
-    }else{
-
-      if(valueClient[1] < client[user]){ // SE QUEDA  CON EL CLIENTE DE MAYOR VALORACIÓN 
-        valueClient = [user, client[user]]
+function mapClient(client) {
+  //CLIENT
+  for (user in client) {
+    if (valueClient == undefined) {
+      valueClient = [user, client[user]]; // Recojo el valor del nombre de cada cliente y la valoración que pide en un array, Convertimos en un Array
+    } else {
+      if (valueClient[1] < client[user]) { // Se queda el cliente con mayor valoración
+        valueClient = [user, client[user]];
       }
     }
   }
 }
 
+// 3 - Cruzamos los datos y organizamos los valores
 
-function relacionClienteEntrenador(body){
-  
-  const {trainers, client} = body; // ESTRAIGO AMBOS ELEMENTOS
-  if(valueTrainer == undefined){
-    mapTrainer(trainers); // SELECCIONA EL ENTRENADOR CON MAYOR REPUTACIÓN
+function relacionClienteEntrenador(body) {
+  const { trainers, client } = body; // Estraigo los elementos
+  if (valueTrainer == undefined) {
+    mapTrainer(trainers); // Selecciona el entrenador con mayor reputación
   }
-  mapClient(client); // SELECCIONA EL CLIENTE QUE EXIGE MAYOR VALORACIÓN 
+  mapClient(client); // Selecciona el cliente con mayor reputación
 
-  if(valueTrainer.client == undefined){ //VERIFICO QUE EXISTE EL CLIENTE
-    valueTrainer.client = []; // SI NO EXISTE LO CREO N
+  if (valueTrainer.client == undefined) {
+    // Verifico que existe el cliente
+    valueTrainer.client = []; // si no existe lo creo
   }
-  valueTrainer.client.push(valueClient); // HACE UN PUSH DEL CLIENTE A ESE ARRAY 
+  valueTrainer.client.push(valueClient); // Hago un push a ese Array
 
-  if(valueTrainer.disp != valueTrainer.client.length) { // VERIFICO QUE LA CANTIDAD DE CLIENTES DE ENTRENADOR SEA MENOR Y DIFERENTE A LA CANTIDAD DE CLIENTES ASIGNADAS 
-      
-      delete client[valueClient[0]]; // BORRO EL CLIENTE DE MI OBJETO INICIAL 
-      const newObj = { trainers, client}; // CREO UN NUEVO OBJETO CON CLIENTES Y ENTRENADORES 
-      valueClient = undefined; // RESETEO NUEVAMENTE PARA PODER MAPEAR MAS ADELANTE 
-      relacionClienteEntrenador(newObj); // LLAMA NUEVAMENTE LA FUNCIÓN CON NUEVOS DATOS (QUITANDO EL CLIENTE ANTERIOR)
-      
+  if (valueTrainer.disp != valueTrainer.client.length) { // Verifico que la cantidad de clientes de los entrenadores sea menor y diferente a la cantidad de clientes asignada
 
-  }else{
+    delete client[valueClient[0]]; // Borro el cliente de mi objeto inicial
+    const newObj = { trainers, client }; // Creo un nuevo objeto de clientes y entrenadores
+    valueClient = undefined; // Hago un reset para poder hacer un Map más adelante
+    relacionClienteEntrenador(newObj); // llama nuevamente la función con nuevos datos (quitando el cliente anterior)
+  } else {
+    const index = trainers.indexOf(valueTrainer); // Busco el indice del entrenador
+    trainers.splice(index, 1); // Elimino el entrenador del Array
+    delete client[valueClient[0]]; // Elimino el cliente
+    const newObj = { trainers, client }; // Creo un nuevo objeto
+    listTrainerAndClient.push(valueTrainer); // Hago un push a la variable global que vamos a retornar
+    valueTrainer = undefined; // Asigna el valor inicial al entrenador
+    valueClient = undefined; // Asigna el valor inicial al cliente
 
-    const index = trainers.indexOf(valueTrainer); // BUSCO EL INDICE DEL ENTRENADOR 
-    trainers.splice(index, 1); // ELIMINO EL ENTRENADOR DEL ARRAY 
-    delete client[valueClient[0]]; // ELIMINO EL CLIENTE
-    const newObj = {trainers, client}; // CREO UN NUEVO OBJETO 
-    listTrainerAndClient.push(valueTrainer); //HAGO UN PUSH A LA VARIABLE GLOBAL DE LA LISTA QUE VAMOS A RETORNAR 
-    valueTrainer = undefined; // ASIGNA EL VALOR INICIAL AL ENTRENADOR 
-    valueClient = undefined; // ASIGNA EL VALOR INICIAL AL CLIENTE
-
-    if(trainers.length > 0){
-      relacionClienteEntrenador(newObj); // SE LOS ENTRENADORES SON MAYORES QUE CERO, SE EJECUTA LA MISMA FUNCIÓN PARA SEGUIR EL PROCESO
+    if (trainers.length > 0) {
+      relacionClienteEntrenador(newObj); // Si los entrenadores son mayor que cero, se ejecuta la misma funcion para seguir proceso
     }
-
   }
 
-  if(trainers.length == 0){ // CUANDO LA LOGITUD DE LOS ENTRENADORES LLEGAN A CERO 
-    return listTrainerAndClient // RETORNO LA LISTA FINAL DE ENTRENADORES Y CLIENTES 
+  if (trainers.length == 0) {  // Cuando la longitud de los entrenadores llegan a cero
+    return listTrainerAndClient; // Retorno la lista final de entrenadores y clientes
   }
-  
 }
 
-
-router.post('/', (req, res) => {
+router.post("/", (req, res) => {
   const list = relacionClienteEntrenador(req.body); // 1 - Sacar la relación entre entrenadores y clientes
   res.status(200).json(list);
   listTrainerAndClient = [];
